@@ -26,15 +26,6 @@ def clean_url(url):
     return url.split("#")[0]
 
 
-def fix_missing_parenthesis_href(text):
-    """
-    Appends ")" after each \href{something}{something} occurrence.
-    """
-    pattern = r"(\\href\{[^}]+\}\{[^}]+\})"
-    modified_text = re.sub(pattern, r"\1)", text)
-    return modified_text
-
-
 def remove_duplicates(pairs):
     """
     Removes duplicate keys while keeping the first occurrence in order,
@@ -53,6 +44,28 @@ def remove_duplicates(pairs):
             seen[key] = value
 
     return [(seen[key], key) for key in seen]
+
+
+def replace_unnamed_links(markdown_text):
+    """
+    Identifies links in Markdown with no name and replaces the name with the href value.
+
+    Args:
+    markdown_text (str): The Markdown text to process.
+
+    Returns:
+    str: Modified Markdown text with href values as names for unnamed links.
+    """
+    # Regex to find Markdown links with empty display text
+    pattern = r"\[\]\((https?://[^\s\)]+)\)"
+
+    # Function to replace the matched pattern
+    def replacer(match):
+        url = match.group(1)
+        return f"[{clean_url(url)}]({url})"
+
+    # Replace all occurrences of the pattern
+    return re.sub(pattern, replacer, markdown_text)
 
 
 def collect_references(content):
@@ -88,6 +101,9 @@ def clean_markdown(
 
     # Collect references before any processing
     references = collect_references(content)
+
+    # Step 0: Replace unnamed links with the URL as the name
+    content = replace_unnamed_links(content)
 
     # Step 1: Clean basic text (but don't escape underscores yet)
     content = clean_text(content)
