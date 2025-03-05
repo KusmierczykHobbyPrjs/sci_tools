@@ -48,7 +48,6 @@ def simplify_equations(equation):
     equation = equation.replace("\\left{", "{").replace("\\right}", "}")
     equation = equation.replace("\\!", "")  # Remove unnecessary spacing commands
 
-    equation = equation.replace(")\\,", ")")
     for s in ["=", "|", "\\le", "\\ge", "\\|", "-"]:
 
         equation = equation.replace(f"\n;{s};", f" {s} ")
@@ -58,6 +57,8 @@ def simplify_equations(equation):
         equation = equation.replace(f";{s};", f" {s} ")
         equation = equation.replace(f"\\;{s}\\;", f" {s} ")
         equation = equation.replace(f"\\,{s}\\,", f" {s} ")
+    equation = equation.replace("\\,", " ")
+    equation = equation.replace("\\|", " | ")
 
     equation = equation.replace("=", " = ")  # Ensure proper spacing around equals sign
 
