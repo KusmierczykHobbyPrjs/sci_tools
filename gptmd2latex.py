@@ -32,7 +32,7 @@ def clean_url(url):
 
 def fix_missing_parenthesis_href(text):
     """
-    Appends ")" after each \href{something}{something} occurrence.
+    Appends ")" after each \\href{something}{something} occurrence.
     """
     pattern = r"(\\href\{[^}]+\}\{[^}]+\})"
     modified_text = re.sub(pattern, r"\1)", text)
