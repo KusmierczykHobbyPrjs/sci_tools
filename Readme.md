@@ -1,7 +1,7 @@
 
 
 ## Searching for hyperparameters 
- - [create_experiments.py](create_experiments.py):Generates scripts based on a template file and value ranges selected for placeholders.
+ - [create_experiments.py](create_experiments.py): Generates scripts based on a template file and value ranges selected for placeholders.
 
 ## Parsing markdown (e.g. from a GPT output) into LaTeX and for Google docs
  - [gptmd2latex.py](gptmd2latex.py): takes a markdown file and produces a LaTeX file

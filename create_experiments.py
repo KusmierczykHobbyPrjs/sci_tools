@@ -41,7 +41,7 @@ TEMPLATE FORMAT:
 ----------------
 Templates use $PLACEHOLDER_NAME format for replacements.
 Special placeholder $IDENTIFIER is automatically generated from all parameters.
-Fields like $DATE,$DATETIME,$DATE0,$DATETIME0,$DATE1,etc. can be used inside of the $IDENTIFIER.
+Fields like $FILE,$DATE,$DATETIME,$DATE0,$DATETIME,etc. can be used inside of the $IDENTIFIER.
 
 Example template:
   python train.py --lr $LEARNING_RATE --batch $BATCH_SIZE --run_name $IDENTIFIER
@@ -278,7 +278,20 @@ def sanitize_for_identifier(value: str) -> str:
 CURRENT_TIME = datetime.now()
 
 
-def generate_identifier(params: Dict[str, Any], prefix: str = "") -> str:
+def parse_hardcoded_fields(prefix, filename):
+    prefix = prefix.replace("$DATETIME0", CURRENT_TIME.strftime("%Y-%m-%d_%H:%M:%S"))
+    prefix = prefix.replace("$DATETIME1", CURRENT_TIME.strftime("%Y%m%d-%H:%M:%S"))
+    prefix = prefix.replace("$DATETIME", CURRENT_TIME.strftime("%Y%m%d%H%M%S"))
+    prefix = prefix.replace("$DATE0", CURRENT_TIME.strftime("%Y-%m-%d"))
+    prefix = prefix.replace("$DATE1", CURRENT_TIME.strftime("%Y%m%d"))
+    prefix = prefix.replace("$DATE", CURRENT_TIME.strftime("%Y%m%d"))
+    prefix = prefix.replace("$FILE", filename)
+    return prefix
+
+
+def generate_identifier(
+    params: Dict[str, Any], prefix: str = "", filename: str = ""
+) -> str:
     """
     Generate $IDENTIFIER value from parameters.
     Format: prefix_PARAM1_VALUE1_PARAM2_VALUE2_...
@@ -287,17 +300,8 @@ def generate_identifier(params: Dict[str, Any], prefix: str = "") -> str:
 
     # Add prefix if provided
     if prefix:
-        prefix = sanitize_for_identifier(prefix)
-        prefix = prefix.replace(
-            "$DATETIME0", CURRENT_TIME.strftime("%Y-%m-%d_%H:%M:%S")
-        )
-        prefix = prefix.replace(
-            "$DATETIME1", CURRENT_TIME.strftime("%Y/%m/%d-%H:%M:%S")
-        )
-        prefix = prefix.replace("$DATETIME", CURRENT_TIME.strftime("%Y%m%d_%H%M%S"))
-        prefix = prefix.replace("$DATE0", CURRENT_TIME.strftime("%Y-%m-%d"))
-        prefix = prefix.replace("$DATE1", CURRENT_TIME.strftime("%Y/%m/%d"))
-        prefix = prefix.replace("$DATE", CURRENT_TIME.strftime("%Y%m%d"))
+        prefix = parse_hardcoded_fields(prefix, filename)
+        # prefix = sanitize_for_identifier(prefix)
         parts.append(prefix)
 
     # Add parameter key-value pairs
@@ -380,6 +384,7 @@ def generate_filename(
 ) -> str:
     """Generate a descriptive filename from parameters."""
     parts = [prefix, str(counter)]
+    filename_prefix = "_".join(parts)
 
     # Add config name if provided
     if config_name:
@@ -393,7 +398,7 @@ def generate_filename(
                 sanitized_value = sanitize_for_filename(str(value))
                 parts.append(f"{sanitized_key}_{sanitized_value}")
 
-    return "_".join(parts)
+    return filename_prefix, "_".join(parts)
 
 
 def write_file_safely(path: str, content: str) -> bool:
@@ -500,15 +505,6 @@ def main():
         grid_combinations = generate_grid_combinations(config["grid_search"])
         print(f"Total grid combinations: {len(grid_combinations)}")
 
-        if args.verbose and grid_combinations:
-            print(f"  First 3 combinations:")
-            for i, params in enumerate(grid_combinations[:3], 1):
-                identifier = generate_identifier(params, config["id"])
-                print(f"    {i}. {params}")
-                print(f"       $IDENTIFIER: {identifier}")
-            if len(grid_combinations) > 3:
-                print(f"    ... and {len(grid_combinations) - 3} more")
-
         for params in grid_combinations:
             all_configs.append(("grid", None, params))
 
@@ -541,11 +537,18 @@ def main():
     for idx, (config_type, config_name, params) in enumerate(all_configs, 1):
         print(f"\n[{idx}/{total_configs}] Generating configuration...")
 
+        # Generate filename
+        filename_prefix, filename = generate_filename(
+            config["output_prefix"], params, idx, config_name
+        )
+        output_path = os.path.join(output_dir, f"{filename}{file_extension}")
+        print(f"  Output file: {output_path}")
+
         # Combine fixed replacements with current config parameters
         all_replacements = {**config["replacements"], **params}
 
         # Generate identifier
-        identifier = generate_identifier(params, config["id"])
+        identifier = generate_identifier(params, config["id"], filename_prefix)
 
         print(f"  Type: {config_type}")
         if config_name:
@@ -562,12 +565,6 @@ def main():
             args.verbose,
             config["string_delimiter"],
         )
-
-        # Generate filename
-        filename = generate_filename(config["output_prefix"], params, idx, config_name)
-        output_path = os.path.join(output_dir, f"{filename}{file_extension}")
-
-        print(f"  Output file: {output_path}")
 
         # Write output file
         if write_file_safely(output_path, output_content):
