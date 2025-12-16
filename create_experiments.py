@@ -40,11 +40,12 @@ CONFIGURATION FILE FORMAT:
 TEMPLATE FORMAT:
 ----------------
 Templates use $PLACEHOLDER_NAME format for replacements.
-Special placeholder $IDENTIFIER is automatically generated from all parameters.
-Fields like $FILE,$DATE,$DATETIME,$DATE0,$DATETIME,etc. can be used inside of the $IDENTIFIER.
+Special placeholder $IDENTIFIER (and $RAWIDENTIFIER) is automatically generated from all parameters.
+Fields like $FILE,$DATE,$DATETIME,$DATE0,$DATETIME,etc. can be used inside of $IDENTIFIER/$RAWIDENTIFIER,
+for example, '$FILE_$DATE0'
 
 Example template:
-  python train.py --lr $LEARNING_RATE --batch $BATCH_SIZE --run_name $IDENTIFIER
+  python train.py --lr $LEARNING_RATE --batch $BATCH_SIZE --run_name $RAWIDENTIFIER
 
 NOTES:
 ------
@@ -327,6 +328,7 @@ def apply_replacements(
         result = template
 
         # First, replace $IDENTIFIER
+        result = result.replace("$RAWIDENTIFIER", identifier)
         result = result.replace(
             "$IDENTIFIER", string_delimiter + identifier + string_delimiter
         )
