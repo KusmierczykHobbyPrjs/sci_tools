@@ -20,8 +20,7 @@ Sample template:
    experiment.learning_rate=$LEARNING_RATE \
    experiment.cls_learning_rate=$CLS_LEARNING_RATE 
 ```
-
-Sample json config:
+where `$RAWIDENTIFIER`, `$IDENTIFIER`, `$LEARNING_RATE`, `$CLS_LEARNING_RATE` are the placeholders filled-up based on the sample json config:
 ```
   {
     "id": "id_$FILE_$DATE",
@@ -44,6 +43,10 @@ Sample json config:
     }
   }
 ```
+where `$FILE` and `$DATE` are special fields.
+
+@TODO unify handling of the special fields.
+
 
 ## Running Jupyter Notebook from command line
 
@@ -62,7 +65,7 @@ Implementation:
  - Changes the working directory (`cd`) to the notebook's location so that file operations inside the script (e.g., loading data) work correctly.
  - Runs the generated Python script with any trailing arguments (`$@`) provided by the user.
 
-TODO: Checks if the .py version which already exists is matches the notebook (has the notebook changed?). 
+@TODO: Checks if the .py version which already exists is matches the notebook (has the notebook changed?). 
 
 ## Parsing markdown (e.g. from a GPT output) into LaTeX and for Google docs
  - [gptmd2latex.py](gptmd2latex.py): takes a markdown file and produces a LaTeX file
